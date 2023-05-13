@@ -151,19 +151,19 @@ export default class AudioReactRecorder extends React.Component {
       // Do something with the data, i.e Convert this to WAV
       let left = e.inputBuffer.getChannelData(0)
       let right = e.inputBuffer.getChannelData(1)
-      if (!self.tested) {
-        self.tested = true
-        // if this reduces to 0 we are not getting any sound
-        if (!left.reduce((a, b) => a + b)) {
-          console.log('Error: There seems to be an issue with your Mic')
-          // clean up;
-          self.stop()
-          self.stream.getTracks().forEach(function (track) {
-            track.stop()
-          })
-          self.context.close()
-        }
-      }
+      // if (!self.tested) {
+      //   self.tested = true
+      //   // if this reduces to 0 we are not getting any sound
+      //   if (!left.reduce((a, b) => a + b)) {
+      //     console.log('Error: There seems to be an issue with your Mic')
+      //     // clean up;
+      //     self.stop()
+      //     self.stream.getTracks().forEach(function (track) {
+      //       track.stop()
+      //     })
+      //     self.context.close()
+      //   }
+      // }
       // we clone the samples
       self.leftchannel.push(new Float32Array(left))
       self.rightchannel.push(new Float32Array(right))
@@ -226,34 +226,28 @@ export default class AudioReactRecorder extends React.Component {
     const draw = function () {
       self.drawVisual = requestAnimationFrame(draw)
 
-      self.analyser.getByteTimeDomainData(dataArray)
+      self.analyser.getByteFrequencyData(dataArray)
 
-      self.canvasCtx.fillStyle = backgroundColor
+      self.canvasCtx.fillStyle = 'rgb(0, 0, 0)'
       self.canvasCtx.fillRect(0, 0, self.WIDTH, self.HEIGHT)
 
-      self.canvasCtx.lineWidth = 2
-      self.canvasCtx.strokeStyle = foregroundColor
+      const barWidth = (self.WIDTH / bufferLength) * 2.5
+      let barHeight
+      let x = 0
 
-      self.canvasCtx.beginPath()
+      for (let i = 0; i < bufferLength; i++) {
+        barHeight = dataArray[i]
 
-      var sliceWidth = (self.WIDTH * 1.0) / bufferLength
-      var x = 0
+        self.canvasCtx.fillStyle = 'rgb(' + (barHeight + 100) + ',50,50)'
+        self.canvasCtx.fillRect(
+          x,
+          self.HEIGHT - barHeight / 2,
+          barWidth,
+          barHeight / 2
+        )
 
-      for (var i = 0; i < bufferLength; i++) {
-        var v = dataArray[i] / 128.0
-        var y = (v * self.HEIGHT) / 2
-
-        if (i === 0) {
-          self.canvasCtx.moveTo(x, y)
-        } else {
-          self.canvasCtx.lineTo(x, y)
-        }
-
-        x += sliceWidth
+        x += barWidth + 1
       }
-
-      self.canvasCtx.lineTo(self.canvas.width, self.canvas.height / 2)
-      self.canvasCtx.stroke()
     }
 
     draw()
